@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Music Albums</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#submitAlbum').click(function() {
+                var album = {
+                    title: $('#title').val(),
+                    artist: $('#artist').val(),
+                    year: $('#year').val()
+                };
+                
+                $.ajax({
+    url: 'https://0pm8gkyye5.execute-api.us-east-1.amazonaws.com/prod/albums',
+    type: 'POST',
+    data: JSON.stringify({
+        httpMethod: 'POST',
+        path: '/albums',
+        body: JSON.stringify(album)
+    }),
+    contentType: 'application/json',
+    success: function(result) {
+        alert('Album added successfully');
+        console.log(result);
+        $('#title').val('');
+        $('#artist').val('');
+        $('#year').val('');
+    },
+    error: function(xhr, textStatus, errorThrown) {
+        alert('Error adding album: ' + errorThrown);
+        console.log(textStatus + ': ' + errorThrown);
+    }
+});
+
+            });
+        });
+        
+        $(document).ready(function() {
+            $('#getAlbums').click(function() {
+                $.ajax({
+                    url: 'https://0pm8gkyye5.execute-api.us-east-1.amazonaws.com/prod/albums',
+                    type: 'GET',
+                    contentType: 'application/json',
+success: function(result) {
+    var albums = result;
+    var html = '';
+    
+    for (var i = 0; i < albums.length; i++) {
+        html += '<div class="col-md-3">';
+        html += '<div class="card mb-4 box-shadow">';
+        // html += '<img class="card-img-top" src="' + albums[i].image_url + '" alt="' + albums[i].title + '">';
+        html += '<div class="card-body">';
+        html += '<h5 class="card-title">' + albums[i].title + '</h5>';
+        html += '<p class="card-text">' + albums[i].artist + '</p>';
+        html += '<p class="card-text">' + (albums[i].year ? albums[i].year : 'N/A') + '</p>';
+        html += '<button type="button" class="btn btn-primary" onclick="editAlbum(\'' + albums[i].id + '\')">Edit</button> ';
+        html += '<button type="button" class="btn btn-danger" onclick="deleteAlbum(\'' + albums[i].id + '\', \'' + albums[i].artist+ '\')">Delete</button>';
+        html += '</div></div></div>';
+    }
+    
+    $('#albumTiles').html(html);
+
+
+},
+
+                    error: function(xhr, textStatus, errorThrown) {
+                        alert('Error getting albums: ' + errorThrown);
+                    }
+                });
+            });
+        });
+        
+        function editAlbum(albumId) {
+    var newTitle = prompt('Enter new title:');
+    var newArtist = prompt('Enter new artist:');
+    var newYear = prompt('Enter new year:');
+    console.log(newTitle);
+    console.log(newArtist);
+    console.log(newYear);
+
+    var body = {
+        "id": albumId,
+        "artist": newArtist,
+        "year": newYear,
+        "title": newTitle
+    };
+    
+    $.ajax({
+        url: 'https://0pm8gkyye5.execute-api.us-east-1.amazonaws.com/prod/albums',
+        type: 'PUT',
+        data: JSON.stringify(body),
+        contentType: 'application/json',
+        success: function(result) {
+            alert('Album updated successfully');
+            console.log(result);
+            $('#getAlbums').trigger('click');
+        },
+        error: function(xhr, textStatus, errorThrown) {
+            alert('Error updating album: ' + errorThrown);
+            console.log(textStatus + ': ' + errorThrown);
+        }
+    });
+}
+
+function deleteAlbum(albumId, albumArtist) {
+if (confirm('Are you sure you want to delete this album?')) {
+$.ajax({
+url: 'https://0pm8gkyye5.execute-api.us-east-1.amazonaws.com/prod/albums',
+type: 'DELETE',
+contentType: 'application/json',
+data: JSON.stringify({
+        httpMethod: 'DELETE',
+        path: '/albums',
+        body: JSON.stringify({ "id": albumId, "artist": albumArtist})
+    }),
+// data: JSON.stringify({
+// httpMethod: 'DELETE',
+// path: '/albums/' + albumId
+// }),
+// contentType: 'application/json',
+// headers: {
+// 'Access-Control-Allow-Origin': '*',
+// 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+// 'Access-Control-Allow-Headers': 'Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With'
+// },
+success: function(result) {
+alert('Album deleted successfully');
+console.log(result);
+$('#getAlbums').trigger('click');
+},
+error: function(xhr, textStatus, errorThrown) {
+alert('Error deleting album: ' + errorThrown);
+console.log(textStatus + ': ' + errorThrown);
+}
+});
+}
+}
+</script>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center my-5">Music Albums</h1>
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <input type="text" class="form-control" placeholder="Title" id="title">
+            </div>
+            <div class="col-md-4">
+                <input type="text" class="form-control" placeholder="Artist" id="artist">
+            </div>
+            <div class="col-md-2">
+                <input type="text" class="form-control" placeholder="Year" id="year">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-success" id="submitAlbum">Add Album</button>
+            </div>
+        </div>
+        <div class="row" id="albumTiles">
+            <!-- Albums will be displayed here -->
+        </div>
+        <div class="row mt-5">
+            <div class="col-md-12 text-center">
+                <button type="button" class="btn btn-primary" id="getAlbums">Get Albums</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

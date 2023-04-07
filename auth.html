@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Music Album Collection App - Authentication</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Music Album Collection App</h1>
+    </header>
+    <main>
+        <section id="login-section">
+            <h2>Login</h2>
+            <form id="login-form">
+                <label for="login-email">Email:</label>
+                <input type="email" id="login-email" name="email" required>
+                <label for="login-password">Password:</label>
+                <input type="password" id="login-password" name="password" required>
+                <div id="new-password-container" style="display: none;">
+                    <label for="new-password">New Password:</label>
+                    <input type="password" id="new-password" name="new-password">
+                </div>
+                <button type="submit">Login</button>
+            </form>
+        </section>
+    </main>
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.791.0.min.js"></script>
+    <script src="https://unpkg.com/amazon-cognito-identity-js/dist/amazon-cognito-identity.min.js"></script>
+
+    <script>
+        // Configure AWS
+        AWS.config.region = 'us-east-1';
+
+        // Configure Cognito
+        var poolData = {
+            UserPoolId: 'us-east-1_BuHewgNjS',
+            ClientId: '4kmok52qe9gduo6pii2lagm5is'
+        };
+        var userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+
+        // Handle login form submission
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var email = document.getElementById('login-email').value;
+            var password = document.getElementById('login-password').value;
+
+            var authenticationData = {
+                Username : email,
+                Password : password
+            };
+            var authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails(authenticationData);
+
+            var userData = {
+                Username : email,
+                Pool : userPool
+            };
+            var cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+
+            cognitoUser.authenticateUser(authenticationDetails, {
+                onSuccess: function (result) {
+                    console.log('access token + ' + result.getAccessToken().getJwtToken());
+                    window.location.href = 'https://reportbucket21239.s3.amazonaws.com/home.html';
+                },
+                onFailure: function(err) {
+                    if (err.code === 'UserNotConfirmedException') {
+                        alert('Error: You have not confirmed your email address. Please check your email inbox for a verification code.');
+                        window.location.href = 'verify.html';
+                    } else if (err.code === 'PasswordResetRequiredException') {
+                        // Allow the user to create a new password
+                        document.getElementById('new-password-container').style.display = 'block';
+                        document.getElementById('login-form').addEventListener('submit', function(e) {
+                            e.preventDefault();
+                            var newPassword = document.getElementById('new-password').value;
+                            cognitoUser.completeNewPasswordChallenge(newPassword, {}, {
+                                onSuccess: function(result) {
+                                    console.log('Password reset successful.');
+                                    window.location.href = 'https://reportbucket21239.s3.amazonaws.com/home.html';
+                                },
+                                onFailure: function(err) {
+                                    alert('Error: ' + err.message);
+                                    console.error(err);
+                                }
+                            });
+                        });
+                    }
+                    else {
+                        alert('Error: ' + err.message);
+                       
+
+console.error(err);
+}
+},
+newPasswordRequired: function(userAttributes, requiredAttributes) {
+// Allow the user to create a new password
+document.getElementById('new-password-container').style.display = 'block';
+document.getElementById('login-form').addEventListener('submit', function(e) {
+e.preventDefault();
+var newPassword = document.getElementById('new-password').value;
+cognitoUser.completeNewPasswordChallenge(newPassword, {}, {
+onSuccess: function(result) {
+console.log('Password reset successful.');
+window.location.href = 'https://reportbucket21239.s3.amazonaws.com/home.html';
+},
+onFailure: function(err) {
+alert('Error: ' + err.message);
+console.error(err);
+}
+});
+});
+}
+});
+});
+</script>
+
+</body>
+</html>
